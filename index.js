@@ -4,9 +4,10 @@ const mongoose = require('mongoose');
 const cmtRouter = require('./routes/cmt');
 const express = require('express');
 const cors = require('cors');
+const { MONGO_URL } = require('./middleware/constants');
 const app = express();
 
-mongoose.connect('mongodb+srv://codelight:VuZ2oSbemeseevCO@cluster0.llaspyi.mongodb.net/codelight')
+mongoose.connect(MONGO_URL)
   .then(() => console.log('Connected to MongoDB...'))
   .catch(err => console.error('Could not connect to MongoDB...'));
   

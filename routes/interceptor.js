@@ -1,4 +1,5 @@
 const axios = require("axios");
+const { AUTH_URL } = require("../middleware/constants");
 const hasAccess = async (appId, accessToCheck, env, idToken) => {
     try{
 // interceptor for token validation
@@ -8,7 +9,7 @@ const headers = {
   };
 
   const response = await axios.post(
-    "https://d0c9-2401-4900-5d12-1252-500c-a65e-75bc-54e3.in.ngrok.io/api/auth/check-app-access",
+    AUTH_URL,
     { appId, accessToCheck, env },
     { headers }
   );
