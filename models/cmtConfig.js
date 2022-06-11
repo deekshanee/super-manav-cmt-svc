@@ -39,6 +39,10 @@ let cmtConfig = new Schema(
     lastUpdatedAt: {
       type: Date,
       required: true
+    },
+    region: {
+      type: String,
+      required: true
     }
   },
   { collection: "CMTCONFIG" }

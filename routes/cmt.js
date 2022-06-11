@@ -1,5 +1,6 @@
 const express = require("express");
 const CMTconfig = require("../models/cmtConfig");
+const { hasAccess } = require("./interceptor");
 const router = express.Router();
 
 /* This method will take all the 
@@ -34,7 +35,8 @@ router.post("/save", async (req, res) => {
     currentConfig: req.body.currentConfig,
     lastUpdatedBy: req.body.createdBy,
     lastUpdatedAt: new Date(),
-    createdAt: new Date()
+    createdAt: new Date(),
+    region: req.body.region,
   };
   const cmt = new CMTconfig(dbObject);
   const response = await cmt.save();
@@ -43,18 +45,32 @@ router.post("/save", async (req, res) => {
 });
 
 /* This will be the get request to get the configuration based on 
-per app/env */
+per app/env/region */
 router.get("/get-config", async (req, res) => {
   try {
-    if (!req.query.applicationName || !req.query.env) {
+    if (!req.query._id || !req.query.applicationName || !req.query.env || !req.body.region) {
       throw new Error("Application name or env is not configured");
     }
-    const response = await CMTconfig.find({
+    const response = await CMTconfig.findOne({
       $and: [
         { applicationName: req.query.applicationName },
         { env: req.query.env },
+        {region: req.body.region},
+        {_id: req.body._id}
       ],
     });
+    res.send(response);
+  } catch (e) {
+    res.send({ error: e.message });
+  }
+});
+/* This will give all the data for the application to show on the dasahsboard */
+
+/* This will be the get request to get the configuration based on 
+per app/env */
+router.get("/get-all", async (req, res) => {
+  try {
+    const response = await CMTconfig.find({});
     res.send(response);
   } catch (e) {
     res.send({ error: e.message });
@@ -63,40 +79,84 @@ router.get("/get-config", async (req, res) => {
 
 /* This end point will be used to rollback the config to certain point
 per app/env */
-router.post("/rollback-config", async (req, res) => {
+router.post("/update-config", async (req, res) => {
   try {
-    if (!req.body.lastUpdatedBy || !req.body._id || !req.body.applicationName || !req.body.env) {
-      throw new Error("Application name /id/createdBy or env is not configured");
+    if (
+      !req.body.lastUpdatedBy ||
+      !req.body._id ||
+      !req.body.applicationName ||
+      !req.body.env ||
+      !req.headers.idtoken
+    ) {
+      throw new Error(
+        "Application name /id/createdBy/token or env is not configured"
+      );
+    }
+    const isAllow = await hasAccess(
+      req.body._id,
+      ["UPDATE"],
+      req.body.env,
+      req.headers.idtoken
+    );
+    if (!isAllow) {
+      throw new Error("You are not authorized to update the configuration");
     }
     const response = await CMTconfig.findOne({
       $and: [
         { applicationName: req.body.applicationName },
         { env: req.body.env },
-        {_id:req.body._id}
+        { _id: req.body._id },
       ],
     });
-    
+
     if (response) {
       // application exists now update the configuration
-      let {historyConfig} = response;
+      let { historyConfig } = response;
       historyConfig.push(req.body.currentConfig);
-      const dbObject = {  
+      const dbObject = {
         historyConfig: historyConfig,
         currentConfig: req.body.currentConfig,
         lastUpdatedBy: req.body.lastUpdatedBy,
         lastUpdatedAt: new Date(),
       };
-      console.log(dbObject);
-      const updateResponse = await CMTconfig.findByIdAndUpdate(req.body._id,
-        dbObject
+      const updateResponse = await CMTconfig.findByIdAndUpdate(
+        req.body._id,
+        dbObject,
+        { new: true }
       );
-      
+
       res.send(updateResponse);
     } else {
       throw new Error("Application does not exists");
     }
   } catch (e) {
-    console.log(e);
+    
+    res.send({ error: e.message });
+  }
+});
+
+/* This will be the get request to get the configuration based on 
+per app/env for the client will do overriden of properties*/
+router.get("/get-client-config", async (req, res) => {
+  try {
+    if (!req.query.appId) {
+      throw new Error("Application name or env is not configured");
+    }
+    const response = await CMTconfig.findOne({ _id: req.query.appId });
+    // here we will merge all the config
+    const mergeMap = new Map();
+    const currentConfigObject = response.currentConfig || {};
+    Object.keys(currentConfigObject).forEach((key) => {
+     
+      // get the key and get all object from that key
+      Object.keys(currentConfigObject[key]).forEach((childKey) => {
+        mergeMap.set(childKey, currentConfigObject[key][childKey]);
+      });
+    });
+    const configObject = Object.fromEntries(mergeMap);
+    response.currentConfig = configObject;
+    res.send(response);
+  } catch (e) {
     res.send({ error: e.message });
   }
 });
