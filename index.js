@@ -1,7 +1,7 @@
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
 const mongoose = require('mongoose');
-const users = require('./routes/users');
+const cmtRouter = require('./routes/cmt');
 const express = require('express');
 const app = express();
 
@@ -10,7 +10,7 @@ mongoose.connect('mongodb+srv://codelight:VuZ2oSbemeseevCO@cluster0.llaspyi.mong
   .catch(err => console.error('Could not connect to MongoDB...'));
 
 app.use(express.json());
-app.use('/api/users', users);
+app.use('/api/cmt', cmtRouter);
 
 
 const port = process.env.PORT || 3000;
