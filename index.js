@@ -4,10 +4,11 @@ const mongoose = require('mongoose');
 const cmtRouter = require('./routes/cmt');
 const express = require('express');
 const cors = require('cors');
-const { MONGO_URL } = require('./middleware/constants');
+const  constants  = require("./middleware/constants");
+
 const app = express();
 
-mongoose.connect(MONGO_URL)
+mongoose.connect(constants.MONGO_URL)
   .then(() => console.log('Connected to MongoDB...'))
   .catch(err => console.error('Could not connect to MongoDB...'));
   

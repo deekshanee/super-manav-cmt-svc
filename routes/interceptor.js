@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { AUTH_URL } = require("../middleware/constants");
+const  constants  = require("../middleware/constants");
 const hasAccess = async (appId, accessToCheck, env, idToken) => {
     try{
 // interceptor for token validation
@@ -9,7 +9,7 @@ const headers = {
   };
 
   const response = await axios.post(
-    AUTH_URL,
+    constants.AUTH_URL,
     { appId, accessToCheck, env },
     { headers }
   );
