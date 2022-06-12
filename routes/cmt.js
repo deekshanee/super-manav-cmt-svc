@@ -45,14 +45,14 @@ router.post("/save", async (req, res) => {
 });
 
 /* This will be the get request to get the configuration based on 
-per app/env/region */
+per appId */
 router.get("/get-config", async (req, res) => {
   try {
-    if (!req.query._id) {
+    if (!req.query.appId) {
       throw new Error("Application id  is not configured");
     }
     const response = await CMTconfig.findOne(
-      {_id: req.body._id}
+      {_id: req.query.appId}
     );
     res.send(response);
   } catch (e) {
