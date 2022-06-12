@@ -12,9 +12,7 @@ mongoose.connect(constants.MONGO_URL)
   .then(() => console.log('Connected to MongoDB...'))
   .catch(err => console.error('Could not connect to MongoDB...'));
   
-  app.use(cors({
-    origin: '*'
-}));
+  app.use(cors());
 app.use(express.json());
 app.use('/api/cmt', cmtRouter);
 

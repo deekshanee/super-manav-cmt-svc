@@ -48,17 +48,12 @@ router.post("/save", async (req, res) => {
 per app/env/region */
 router.get("/get-config", async (req, res) => {
   try {
-    if (!req.query._id || !req.query.applicationName || !req.query.env || !req.body.region) {
-      throw new Error("Application name or env is not configured");
+    if (!req.query._id) {
+      throw new Error("Application id  is not configured");
     }
-    const response = await CMTconfig.findOne({
-      $and: [
-        { applicationName: req.query.applicationName },
-        { env: req.query.env },
-        {region: req.body.region},
-        {_id: req.body._id}
-      ],
-    });
+    const response = await CMTconfig.findOne(
+      {_id: req.body._id}
+    );
     res.send(response);
   } catch (e) {
     res.send({ error: e.message });
@@ -70,7 +65,7 @@ router.get("/get-config", async (req, res) => {
 per app/env */
 router.get("/get-all", async (req, res) => {
   try {
-    const response = await CMTconfig.find({});
+    const response = await CMTconfig.find({region:req.query.region});
     res.send(response);
   } catch (e) {
     res.send({ error: e.message });
@@ -89,7 +84,7 @@ router.post("/update-config", async (req, res) => {
       !req.headers.idtoken
     ) {
       throw new Error(
-        "Application name /id/createdBy/token or env is not configured"
+        "Application name /id/lastupdatedby/token or env is not configured"
       );
     }
     const isAllow = await hasAccess(
@@ -98,7 +93,7 @@ router.post("/update-config", async (req, res) => {
       req.body.env,
       req.headers.idtoken
     );
-    if (!isAllow) {
+    if (isAllow) {
       throw new Error("You are not authorized to update the configuration");
     }
     const response = await CMTconfig.findOne({
